@@ -44,17 +44,23 @@ public class LengthService : ILengthService
 public class ServiceMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly IMathService _mathService;
 
-    public ServiceMiddleware(RequestDelegate next)
+    public ServiceMiddleware(RequestDelegate next, IMathService mathService)
     {
         _next = next;
+        _mathService = mathService;
     }
 
-    public async Task InvokeAsync(HttpContext context, IMathService mathService, IUpperCaseService upperCaseService, ILengthService lengthService)
+    public async Task InvokeAsync(HttpContext context, IUpperCaseService upperCaseService, ILengthService lengthService)
     {
-        var sum = mathService.Add(5, 10);
+        var sum = _mathService.Add(5, 10);
+
         var upperCase = upperCaseService.ToUpperCase("hello");
         var length = lengthService.GetLength("hello");
+
+        var mathServiceFromContext = context.RequestServices.GetRequiredService<IMathService>();
+        var sumFromContext = mathServiceFromContext.Add(20, 30); 
 
         var resultHtml = $@"
         <!DOCTYPE html>
@@ -65,9 +71,10 @@ public class ServiceMiddleware
         </head>
         <body>
             <h1>Service Results</h1>
-            <p><strong>Sum:</strong> {sum}</p>
-            <p><strong>Upper Case:</strong> {upperCase}</p>
-            <p><strong>Length:</strong> {length}</p>
+            <p>Sum (Constructor): {sum}</p>
+            <p>Upper Case: {upperCase}</p>
+            <p>Length: {length}</p>
+            <p>Sum from Context: {sumFromContext}</p>
         </body>
         </html>";
 
